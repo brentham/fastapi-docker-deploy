@@ -1,8 +1,17 @@
 start:
-	uvicorn main:app --reload
+	uvicorn app.src.main:app --reload
 
 freeze:
 	pip3 freeze > requirements.txt
 
 depends:
 	pip3 install -r requirements.txt
+
+build-dev:
+	docker build -t fast-test:dev .
+
+run-dev:
+	docker run -it fast-test:dev sh
+
+start-dev:
+	docker run -p 85:80 fast-test:dev
