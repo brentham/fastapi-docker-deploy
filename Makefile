@@ -1,4 +1,6 @@
 start:
+	uvicorn main:app --reload
+	uvicorn src.main:app --reload
 	uvicorn app.src.main:app --reload
 
 freeze:

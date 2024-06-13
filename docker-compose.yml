@@ -1,10 +1,9 @@
 services:
-  fast-demo:
-    container_name: fast-test
+  fast-test-cvs:
+    container_name: fast-test-cvs
     image: fast-test-cvs:dev
     restart: unless-stopped
     ports:
       - "85:80"
     # env_file:
     #   - .env
-    # platform: linux/amd64 # Patch for M1 Mac
