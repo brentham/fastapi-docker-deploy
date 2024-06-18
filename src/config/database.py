@@ -10,8 +10,10 @@ db_username = settings.DB_USERNAME
 db_password = settings.DB_PASSWORD
 db_url = settings.DB_URL
 db_name = settings.DB_NAME
+db_driver = settings.DB_DRIVER
 
 URL_DATABASE = f'{db_type}://{db_username}:{db_password}@{db_url}/{db_name}'
+# URL_DATABASE = f'{db_type}://{db_username}:{db_password}@{db_url}/{db_name}?driver={db_driver}'
 
 engine = create_engine(URL_DATABASE)
 
