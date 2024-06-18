@@ -11,7 +11,6 @@ class Settings(BaseSettings):
     DB_URL: str
     DB_NAME: str
     DB_TYPE: str
-    DB_DRIVER: str
 
     SECRET_KEY: str
 
