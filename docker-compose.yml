@@ -12,9 +12,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=quiz-app
-      - POSTGRES_USER=brent
-      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=quiz_app
+      - POSTGRES_USER=sa
+      - POSTGRES_PASSWORD=Password123
     # volumes:
     #   - postgres-data:/var/lib/postgresql/db
 
@@ -27,7 +27,7 @@ services:
     environment:
         - ACCEPT_EULA=1
         - MSSQL_PID=Developer
-        - MSSQL_USER=SA 
+        - MSSQL_USER=sa
         - MSSQL_SA_PASSWORD=Password123
     ports:
         - 1433:1433
