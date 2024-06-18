@@ -1,0 +1,8 @@
+SELECT TOP (1000) [id]
+      ,[email]
+      ,[username]
+      ,[first_name]
+      ,[last_name]
+      ,[hashed_password]
+      ,[is_active]
+  FROM [quiz_app].[dbo].[users]
