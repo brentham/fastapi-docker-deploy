@@ -5,7 +5,7 @@ from config.config import Settings
 from config.database import engine
 from routes import auth
 
-from routes.auth import main, models
+# from routes.auth import main, models
 # from routes.todos import main, models
 # from routes.listings import main, models
 
