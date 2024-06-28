@@ -1,15 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import RedirectResponse
 from config.config import Settings
 
 from config.database import engine
 from routes import auth
 
-# from routes.auth import main, models
-# from routes.todos import main, models
-# from routes.listings import main, models
+from routes.auth import main, models
 
-# app = FastAPI()
+auth.models.Base.metadata.create_all(bind=engine)
+
 settings = Settings()
 
 app = FastAPI(
@@ -25,11 +25,17 @@ app.add_middleware(
     allow_credentials=True
 )
 
-# models.Base.metadata.create_all(bind=engine)
-auth.models.Base.metadata.create_all(bind=engine)
-# todos.models.Base.metadata.create_all(bind=engine)
-# listings.models.Base.metadata.create_all(bind=engine)
 
-# Routes
+# ---------------Routes-------------------
 app.include_router(auth.main.router)
-# app.include_router(todos.main.router)
+# ----------------------------------------
+
+
+# Redirect / -> Swagger-UI documentation
+@app.get("/")
+def main_function():
+    """
+    # Redirect
+    to documentation (`/docs/`).
+    """
+    return RedirectResponse(url="/docs/")
