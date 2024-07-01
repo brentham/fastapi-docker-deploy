@@ -1,0 +1,58 @@
+name: Deploy FastAPI to Quay.io and Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+
+    - name: Install dependencies
+      run: |
+        poetry install
+
+    - name: Build Docker image
+      run: |
+        docker build -t fastapi-app:latest .
+
+    - name: Login to Quay.io
+      run: |
+        echo ${{ secrets.QUAY_PASSWORD }} | docker login quay.io -u ${{ secrets.QUAY_USERNAME }} --password-stdin
+
+    - name: Push to Quay.io
+      run: |
+        docker tag fastapi-app:latest quay.io/${{ secrets.QUAY_USERNAME }}/fastapi-app:latest
+        docker push quay.io/${{ secrets.QUAY_USERNAME }}/fastapi-app:latest
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy to Azure App Service
+      run: |
+        az webapp config container set --name ${{ secrets.APP_SERVICE_NAME }} \
+          --resource-group ${{ secrets.RESOURCE_GROUP }} \
+          --docker-custom-image-name quay.io/${{ secrets.QUAY_USERNAME }}/fastapi-app:latest \
+          --docker-registry-server-url https://quay.io \
+          --docker-registry-server-user ${{ secrets.QUAY_USERNAME }} \
+          --docker-registry-server-password ${{ secrets.QUAY_PASSWORD }}
+
+    - name: Restart Azure App Service
+      run: |
+        az webapp restart --name ${{ secrets.APP_SERVICE_NAME }} --resource-group ${{ secrets.RESOURCE_GROUP }}
