@@ -46,3 +46,32 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     token = create_access_token(user.username, user.id, expires_delta=token_expires)
 
     return {"token": token}
+
+
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to the FastAPI Azure SSO example"}
+
+@app.get("/login")
+async def login():
+    # Generate the authorization URL
+    auth_url = app_msal.get_authorization_request_url(SCOPE, redirect_uri=REDIRECT_URI)
+    return RedirectResponse(auth_url)
+
+@app.get("/auth-redirect")
+async def auth_redirect(request: Request):
+    # Get the authorization code from the query parameters
+    code = request.query_params.get("code")
+    if not code:
+        raise HTTPException(status_code=400, detail="Authorization code not found")
+
+    # Exchange the authorization code for an access token
+    result = app_msal.acquire_token_by_authorization_code(code, SCOPE, redirect_uri=REDIRECT_URI)
+    if "access_token" not in result:
+        raise HTTPException(status_code=400, detail="Failed to acquire access token")
+
+    return {"access_token": result["access_token"], "id_token_claims": result.get("id_token_claims")}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
