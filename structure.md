@@ -1,8 +1,7 @@
 fastapi-project
 ├── alembic/
-├── database  # db connection
-│   │   ├── client.py  # client model for external service
-│   │   ├── schemas.py
+├── config  # db connection
+│   │   ├── database.py
 │   │   ├── config.py
 │   │   └── utils.py
 ├── src
