@@ -1,39 +1,56 @@
-from fastapi import APIRouter, Depends, HTTPException
+import datetime
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
+from fastapi.security import OAuth2PasswordBearer
 from fastapi_sso.sso.microsoft import MicrosoftSSO
-from starlette.requests import Request
-from starlette.responses import RedirectResponse
-from config.config import get_settings
-from auth.dependencies import get_current_user
-from auth.schemas import Token
+from fastapi_sso.sso.base import OpenID
+from jose import jwt
+from auth.config import AuthSettings
+from auth.dependencies import get_logged_user
 
 router = APIRouter()
 
-settings = get_settings()
+auth_settings = AuthSettings()
 
-# Initialize Microsoft SSO
 sso = MicrosoftSSO(
-    client_id=settings.MICROSOFT_CLIENT_ID,
-    client_secret=settings.MICROSOFT_CLIENT_SECRET,
-    redirect_uri=settings.MICROSOFT_REDIRECT_URI,
-    allow_insecure_http=settings.DEBUG,  # Only for development
+    client_id=auth_settings.MICROSOFT_CLIENT_ID,
+    client_secret=auth_settings.MICROSOFT_CLIENT_SECRET,
+    redirect_uri=auth_settings.MICROSOFT_REDIRECT_URI,
 )
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+
 @router.get("/login")
-async def login(request: Request):
-    """Redirect user to Microsoft's login page."""
-    return await sso.get_login_redirect(request)
+async def login():
+    """Redirect the user to the Microsoft login page."""
+    return await sso.get_login_redirect()
+
+@router.get("/logout")
+async def logout():
+    """Forget the user's session."""
+    response = RedirectResponse(url="/protected")
+    return response
 
 @router.get("/callback")
-async def callback(request: Request):
-    """Callback route that Microsoft will redirect to after login."""
-    user = await sso.verify_and_process(request)
-    if not user:
-        raise HTTPException(status_code=400, detail="Authentication failed")
+async def login_callback(request: Request):
+    """Process login and redirect the user to the protected endpoint."""
+    openid = await sso.verify_and_process(request)
+    if not openid:
+        raise HTTPException(status_code=401, detail="Authentication failed")
     
-    # Here you can create your own user object and issue a JWT token
-    token = Token(access_token="fake-jwt-token", token_type="bearer")
-    return token
+    # Create a JWT with the user's OpenID
+    expiration = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(days=1)
+    token = jwt.encode(
+        {"pld": openid.dict(), "exp": expiration, "sub": openid.id},
+        key=auth_settings.SECRET_KEY,
+        algorithm="HS256"
+    )
+    return {"access_token": token, "token_type": "bearer"}
 
-@router.get("/user", dependencies=[Depends(get_current_user)])
-async def get_user(user: dict = Depends(get_current_user)):
-    return user
+@router.get("/protected")
+async def protected_endpoint(user: OpenID = Depends(get_logged_user)):
+    """This endpoint will say hello to the logged user.
+    If the user is not logged, it will return a 401 error from `get_logged_user`."""
+    return {
+        "message": f"You are very welcome, {user.email}!",
+    }
